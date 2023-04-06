@@ -1,0 +1,6 @@
+﻿"L1"= 15in"L2"= 12.5in
+"L3"= 15.207in
+"L4"= 15in
+"LL"= 30in"w"= 0.75in"t"= 0.125in
+"holeD" = 0.125in
+"holeOffset" = 0.25in"basketMount" = 0.75in"mountLength" = 2in
