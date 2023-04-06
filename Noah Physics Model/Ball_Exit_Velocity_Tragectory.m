@@ -2,14 +2,14 @@ clear
 clc
 close all
 
-PKMS = importPKMS('KinematicDatafromPMKS.51.50.8.29.3.2023.txt');
+PKMS = importPKMS('KinematicDatafromPMKS.15rpm.txt');
 m = 0.001; % kg
 g =9.81; % m/s2
 
 %defines the variables takes fromt the PKMS simulation and saves the to
 %discrete variables
 theta_data = [PKMS.TimeSteps, PKMS.angle_output+pi/2];
-omega_data = [PKMS.TimeSteps, PKMS.angVel_output];
+omega_data = [PKMS.TimeSteps, -1*PKMS.angVel_output];
 alpha_data = [PKMS.TimeSteps, PKMS.angAccel_output];
 
 % Finds the index where the robot arm starts rotating CW (
@@ -55,7 +55,7 @@ p_final = X(end, 1);
 pdot_final = X(end, 2);
 p_doubledot_final = X(end, 3);
 theta_final = interp1(theta_data(:,1), theta_data(:,2), t(end)) % radians
-
+theta_final_deg = rad2deg(theta_final)
 
 % Calculate the trajectory after p exceeds 80
 [trajectory_time, trajectory_data] = trajectory_after_p_exceeds_80(t(end), Rp_x(end), Rp_y(end), Vp_x(end), Vp_y(end));
@@ -142,7 +142,7 @@ end
 
 function [value, isterminal, direction] = event_function(t, X)
     p = X(1);
-    value = 70 - p; % Trigger when p > 80
+    value = 80 - p; % Trigger when p > 80
     isterminal = 1; % Stop the solver when the event is triggered
     direction = []; % Trigger the event in any direction
 end
@@ -158,7 +158,7 @@ function [t_trajectory, trajectory_data] = trajectory_after_p_exceeds_80(t_start
     vy_initial = Vp_y_final;
 
     % Time span for the trajectory calculation
-    t_end = t_start + 10; % Adjust this value as needed
+    t_end = t_start + 100; % Adjust this value as needed
     t_trajectory = linspace(t_start, t_end, 1000);
 
     % Initialize trajectory arrays
