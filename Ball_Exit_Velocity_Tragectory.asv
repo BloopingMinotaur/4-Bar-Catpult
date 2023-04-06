@@ -1,5 +1,7 @@
 clear
 clc
+close all
+
 PKMS = importPKMS('KinematicDatafromPMKS.51.50.8.29.3.2023.txt');
 m = 0.001; % kg
 g =9.81; % m/s2
@@ -52,21 +54,42 @@ Ap_y = p .* alpha .* cos(theta) - p .* omega.^2 .* sin(theta) + pdot .* omega .*
 p_final = X(end, 1);
 pdot_final = X(end, 2);
 p_doubledot_final = X(end, 3);
+theta_final = interp1(theta_data(:,1), theta_data(:,2), t(end)) % radians
+
 
 % Calculate the trajectory after p exceeds 80
-[trajectory_time, trajectory_data] = trajectory_after_p_exceeds_80(t(end), p_final, pdot_final, p_doubledot_final, theta_data);
+[trajectory_time, trajectory_data] = trajectory_after_p_exceeds_80(t(end), Rp_x(end), Rp_y(end), Vp_x(end), Vp_y(end));
 
+x_trajectory = trajectory_data(:, 1);
+y_trajectory = trajectory_data(:, 2);
+
+total_Rp_x = [Rp_x; x_trajectory];
+total_Rp_y = [Rp_y; y_trajectory];
+
+total_time = [t; trajectory_time'];
 
 % Plot position, velocity, and acceleration
 figure;
-hold on;
-plot(Rp_x,Rp_y, 'b');
-plot()
+hold on
+plot(total_Rp_x, total_Rp_y,'b');
+plot(x_trajectory,y_trajectory,'r');
+hold off
+xlabel('X Position (m)');
+ylabel('Y Position (m)');
+title('Total Trajectory of p');
+legend('Ball In Basket', 'Ball Released From basket','location','best');
+
+figure;
+plot(total_time, total_Rp_x);
 xlabel('Time (s)');
-ylabel('Position (m)');
-legend('Rp','location','best');
-title('Position vs. Time');
-hold off;
+ylabel('X Position (m)');
+title('X Position vs. Time');
+
+figure;
+plot(total_time, total_Rp_y);
+xlabel('Time (s)');
+ylabel('Y Position (m)');
+title('Y Position vs. Time')
 
 figure;
 plot(t, Rp_x, 'r', t, Rp_y, 'b');
@@ -94,6 +117,9 @@ function dXdt = system_dynamics(t, X, theta_data, omega_data, alpha_data)
     p = X(1);
     pdot = X(2);
     p_doubledot = X(3);
+    
+    % Ensure p is not less than the minimum value (60)
+    p = max(p, 60);
 
     % Interpolate theta, omega, and alpha at the current simulation time step
     theta = interp1(theta_data(:,1), theta_data(:,2), t);
@@ -113,33 +139,50 @@ function dXdt = system_dynamics(t, X, theta_data, omega_data, alpha_data)
     dXdt = A * X + B * alpha;
 end
 
+
 function [value, isterminal, direction] = event_function(t, X)
     p = X(1);
-    value = 80 - p; % Trigger when p > 80
+    value = 70 - p; % Trigger when p > 80
     isterminal = 1; % Stop the solver when the event is triggered
     direction = []; % Trigger the event in any direction
 end
 
 % Function to calculate the trajectory after p exceeds 80
-function [t_trajectory, trajectory_data] = trajectory_after_p_exceeds_80(t_start, p_initial, pdot_initial, p_doubledot_initial, theta_data)
+function [t_trajectory, trajectory_data] = trajectory_after_p_exceeds_80(t_start, Rp_x_final, Rp_y_final, Vp_x_final, Vp_y_final)
     g = 9.81; % Acceleration due to gravity (m/s^2)
     
-    % Calculate initial horizontal and vertical positions and velocities
-    theta_final = interp1(theta_data(:,1), theta_data(:,2), t_start);
-    x_initial = p_initial * cos(theta_final);
-    y_initial = p_initial * sin(theta_final);
-    vx_initial = pdot_initial * cos(theta_final);
-    vy_initial = pdot_initial * sin(theta_final);
+    % Use final values of Rp_x, Rp_y, Vp_x, and Vp_y as initial conditions
+    x_initial = Rp_x_final;
+    y_initial = Rp_y_final;
+    vx_initial = Vp_x_final;
+    vy_initial = Vp_y_final;
 
     % Time span for the trajectory calculation
     t_end = t_start + 10; % Adjust this value as needed
     t_trajectory = linspace(t_start, t_end, 1000);
 
-    % Calculate the trajectory
-    x_trajectory = x_initial + vx_initial * (t_trajectory - t_start);
-    y_trajectory = y_initial + vy_initial * (t_trajectory - t_start) - 0.5 * g * (t_trajectory - t_start).^2;
+    % Initialize trajectory arrays
+    x_trajectory = zeros(size(t_trajectory));
+    y_trajectory = zeros(size(t_trajectory));
+
+    % Calculate the trajectory and check for termination condition
+    for i = 1:length(t_trajectory)
+        t_curr = t_trajectory(i);
+        x_trajectory(i) = x_initial + vx_initial * (t_curr - t_start);
+        y_trajectory(i) = y_initial + vy_initial * (t_curr - t_start) - 0.5 * g * (t_curr - t_start).^2;
+
+        % Terminate trajectory calculation if y_trajectory is equal to or less than zero
+        if y_trajectory(i) <= 0
+            t_trajectory = t_trajectory(1:i);
+            x_trajectory = x_trajectory(1:i);
+            y_trajectory = y_trajectory(1:i);
+            break;
+        end
+    end
 
     % Combine the trajectory data
     trajectory_data = [x_trajectory', y_trajectory'];
 end
+
+
 
