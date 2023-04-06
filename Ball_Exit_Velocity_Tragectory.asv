@@ -56,18 +56,17 @@ p_doubledot_final = X(end, 3);
 % Calculate the trajectory after p exceeds 80
 [trajectory_time, trajectory_data] = trajectory_after_p_exceeds_80(t(end), p_final, pdot_final, p_doubledot_final, theta_data);
 
-x_trajectory = trajectory_data(:, 1);
-y_trajectory = trajectory_data(:, 2);
-
-total_Rp_x = [Rp_x; x_trajectory];
-total_Rp_y = [Rp_y; y_trajectory];
 
 % Plot position, velocity, and acceleration
 figure;
-plot(total_Rp_x, total_Rp_y);
-xlabel('X Position (m)');
-ylabel('Y Position (m)');
-title('Total Trajectory of p');
+hold on;
+plot(Rp_x,Rp_y, 'b');
+plot()
+xlabel('Time (s)');
+ylabel('Position (m)');
+legend('Rp','location','best');
+title('Position vs. Time');
+hold off;
 
 figure;
 plot(t, Rp_x, 'r', t, Rp_y, 'b');
