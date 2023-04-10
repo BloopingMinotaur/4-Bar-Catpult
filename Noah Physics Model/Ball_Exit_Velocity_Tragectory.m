@@ -2,9 +2,9 @@ clear
 clc
 close all
 
-PKMS = importPKMS('KinematicDatafromPMKS.15rpm.txt');
-m = 0.001; % kg
-g =9.81; % m/s2
+PKMS = importPKMS('KinematicDatafromPMKS.foot_10rpm.txt');
+m = 1/16; % 1 oz
+g =386.088; % in/s2
 
 %defines the variables takes fromt the PKMS simulation and saves the to
 %discrete variables
@@ -57,7 +57,7 @@ p_doubledot_final = X(end, 3);
 theta_final = interp1(theta_data(:,1), theta_data(:,2), t(end)) % radians
 theta_final_deg = rad2deg(theta_final)
 
-% Calculate the trajectory after p exceeds 80
+% Calculate the trajectory after p exceeds 16
 [trajectory_time, trajectory_data] = trajectory_after_p_exceeds_80(t(end), Rp_x(end), Rp_y(end), Vp_x(end), Vp_y(end));
 
 x_trajectory = trajectory_data(:, 1);
@@ -74,41 +74,41 @@ hold on
 plot(total_Rp_x, total_Rp_y,'b');
 plot(x_trajectory,y_trajectory,'r');
 hold off
-xlabel('X Position (m)');
-ylabel('Y Position (m)');
+xlabel('X Position (in)');
+ylabel('Y Position (in)');
 title('Total Trajectory of p');
 legend('Ball In Basket', 'Ball Released From basket','location','best');
 
 figure;
 plot(total_time, total_Rp_x);
 xlabel('Time (s)');
-ylabel('X Position (m)');
+ylabel('X Position (in)');
 title('X Position vs. Time');
 
 figure;
 plot(total_time, total_Rp_y);
 xlabel('Time (s)');
-ylabel('Y Position (m)');
+ylabel('Y Position (in)');
 title('Y Position vs. Time')
 
 figure;
 plot(t, Rp_x, 'r', t, Rp_y, 'b');
 xlabel('Time (s)');
-ylabel('Position (m)');
+ylabel('Position (in)');
 legend('Rp_x', 'Rp_y','location','best');
 title('Position vs. Time');
 
 figure;
 plot(t, Vp_x, 'r', t, Vp_y, 'b');
 xlabel('Time (s)');
-ylabel('Velocity (m/s)');
+ylabel('Velocity (in/s)');
 legend('Vp_x', 'Vp_y','location','best');
 title('Velocity vs. Time');
 
 figure;
 plot(t, Ap_x, 'r', t, Ap_y, 'b');
 xlabel('Time (s)');
-ylabel('Acceleration (m/s^2)');
+ylabel('Acceleration (in/s^2)');
 legend('Ap_x', 'Ap_y','location','best');
 title('Acceleration vs. Time');
 
@@ -142,12 +142,12 @@ end
 
 function [value, isterminal, direction] = event_function(t, X)
     p = X(1);
-    value = 80 - p; % Trigger when p > 80
+    value = 16 - p; % Trigger when p > 16
     isterminal = 1; % Stop the solver when the event is triggered
     direction = []; % Trigger the event in any direction
 end
 
-% Function to calculate the trajectory after p exceeds 80
+% Function to calculate the trajectory after p exceeds 16
 function [t_trajectory, trajectory_data] = trajectory_after_p_exceeds_80(t_start, Rp_x_final, Rp_y_final, Vp_x_final, Vp_y_final)
     g = 9.81; % Acceleration due to gravity (m/s^2)
     
