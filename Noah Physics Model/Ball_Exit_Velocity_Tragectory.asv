@@ -2,8 +2,8 @@ clear
 clc
 close all
 
-PKMS = importPKMS('KinematicDatafromPMKS.45LaunchVectory18inV1_30rpm.txt');
-m = 1/16; % 1 oz
+PKMS = importPKMS('KinematicDatafromPMKS.foot_10rpm.txt');
+m = 1; % 1 oz
 g =386.088; % in/s2
 
 %defines the variables takes fromt the PKMS simulation and saves the to
@@ -66,16 +66,8 @@ Ap_y = p .* alpha .* cos(theta) - p .* omega.^2 .* sin(theta) + pdot .* omega .*
 p_final = X(end, 1);
 pdot_final = X(end, 2);
 p_doubledot_final = X(end, 3);
-theta_final = interp1(theta_data(:,1), theta_data(:,2), t(end)); % radians
-theta_final_deg = rad2deg(theta_final);
-
-Vp_x_final = Vp_x(end);
-Vp_y_final = Vp_y(end);
-Vp_mag_final =sqrt(Vp_x_final^2+Vp_y_final^2);
-angle_velocity_vector = atan2(Vp_y_final, Vp_x_final);
-angle_velocity_vector_deg = rad2deg(angle_velocity_vector);
-fprintf('The Magnitude of the velocity vector at the end of system dynamics is %f in/s\n',Vp_mag_final);
-fprintf('The angle of the velocity vector at the end of system dynamics is %f radians or %f degrees\n', angle_velocity_vector, angle_velocity_vector_deg);
+theta_final = interp1(theta_data(:,1), theta_data(:,2), t(end)) % radians
+theta_final_deg = rad2deg(theta_final)
 
 % Calculate the trajectory after p exceeds 16
 [trajectory_time, trajectory_data] = trajectory_after_p_exceeds_80(t(end), Rp_x(end), Rp_y(end), Vp_x(end), Vp_y(end));
@@ -138,8 +130,8 @@ function dXdt = system_dynamics(t, X, theta_data, omega_data, alpha_data)
     pdot = X(2);
     p_doubledot = X(3);
     
-    % Ensure p is not less than the minimum value (12)
-    p = max(p, 18);
+    % Ensure p is not less than the minimum value (60)
+    p = max(p, 12);
 
     % Interpolate theta, omega, and alpha at the current simulation time step
     theta = interp1(theta_data(:,1), theta_data(:,2), t);
@@ -162,7 +154,7 @@ end
 
 function [value, isterminal, direction] = event_function(t, X)
     p = X(1);
-    value = 21.5 - p; % Trigger when p > 28
+    value = 14.5 - p; % Trigger when p > 28
     isterminal = 1; % Stop the solver when the event is triggered
     direction = []; % Trigger the event in any direction
 end
