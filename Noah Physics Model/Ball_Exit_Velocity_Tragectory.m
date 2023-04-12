@@ -72,10 +72,18 @@ theta_final_deg = rad2deg(theta_final);
 Vp_x_final = Vp_x(end);
 Vp_y_final = Vp_y(end);
 Vp_mag_final =sqrt(Vp_x_final^2+Vp_y_final^2);
+Vp_mph_final = Vp_mag_final*0.0568182;
 angle_velocity_vector = atan2(Vp_y_final, Vp_x_final);
 angle_velocity_vector_deg = rad2deg(angle_velocity_vector);
-fprintf('The Magnitude of the velocity vector at the end of system dynamics is %f in/s\n',Vp_mag_final);
+fprintf('The Magnitude of the velocity vector at the end of system dynamics is %f in/s or %f in mph\n',Vp_mag_final,Vp_mph_final);
 fprintf('The angle of the velocity vector at the end of system dynamics is %f radians or %f degrees\n', angle_velocity_vector, angle_velocity_vector_deg);
+
+Ap_x_final = Ap_x(end);
+Ap_y_final = Ap_y(end);
+Ap_mag_final =sqrt(Ap_x_final^2+Ap_y_final^2);
+Ap_gs_final = Ap_mag_final / 386.088;
+
+fprintf('The Magnitude of the acceleration vector at the end of system dynamics is %f in/s or %f gs\n', Ap_mag_final, Ap_gs_final);
 
 % Calculate the trajectory after p exceeds 16
 [trajectory_time, trajectory_data] = trajectory_after_p_exceeds_80(t(end), Rp_x(end), Rp_y(end), Vp_x(end), Vp_y(end));
@@ -162,7 +170,7 @@ end
 
 function [value, isterminal, direction] = event_function(t, X)
     p = X(1);
-    value = 21.5 - p; % Trigger when p > 28
+    value = 21.5 - p; % Trigger when p > 21.5
     isterminal = 1; % Stop the solver when the event is triggered
     direction = []; % Trigger the event in any direction
 end

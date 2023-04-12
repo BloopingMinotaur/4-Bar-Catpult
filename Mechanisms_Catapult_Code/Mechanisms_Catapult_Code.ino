@@ -6,8 +6,7 @@
 // MPU-6050 setup
 MPU6050 mpu;
 int16_t ax, ay, az, gx, gy, gz;
-double angle = 0;
-const double RAD_TO_DEG = 180.0 / PI;
+double acceleration = 0;
 
 // Motor and encoder setup
 const int motorPinA = 8;
@@ -30,8 +29,8 @@ void setup() {
   delay(500);
 
   // Configure PID
-  Setpoint = 0;
-  Input = angle;
+  Setpoint = /* Desired acceleration value */;
+  Input = acceleration;
   myPID.SetMode(AUTOMATIC);
   myPID.SetSampleTime(10);
   myPID.SetOutputLimits(-255, 255);
@@ -45,11 +44,11 @@ void loop() {
   // Read accelerometer and gyroscope data
   mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
-  // Calculate angle from accelerometer data
-  angle = atan2(ay, sqrt(pow(ax, 2) + pow(az, 2))) * RAD_TO_DEG;
+  // Calculate acceleration magnitude from accelerometer data
+  acceleration = sqrt(pow(ax, 2) + pow(ay, 2) + pow(az, 2));
 
   // Update PID input
-  Input = angle;
+  Input = acceleration;
 
   // Compute PID
   myPID.Compute();
@@ -72,4 +71,5 @@ void controlMotor(int speed) {
     analogWrite(5, abs(speed));
   }
 }
+
 
