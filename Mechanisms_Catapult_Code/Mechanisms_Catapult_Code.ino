@@ -1,11 +1,12 @@
 #include <Wire.h>
-#include <MPU6050.h>
-#include <PID_v1.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <PID_v1_bc.h>
 #include <Encoder.h>
 
 // MPU-6050 setup
-MPU6050 mpu;
-int16_t ax, ay, az, gx, gy, gz;
+Adafruit_MPU6050 mpu;
+double ax, ay, az;
 double acceleration = 0;
 
 // Motor and encoder setup
@@ -25,7 +26,15 @@ void setup() {
   Wire.begin();
 
   // Initialize MPU-6050
-  mpu.initialize();
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
   delay(500);
 
   // Configure PID
@@ -41,10 +50,16 @@ void setup() {
 }
 
 void loop() {
-  // Read accelerometer and gyroscope data
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  // Read accelerometer data
+  sensors_event_t a_event, g_event, temp_event;
+  mpu.getEvent(&a_event, &g_event, &temp_event);
 
-  // Calculate acceleration magnitude from accelerometer data
+  // Update acceleration values
+  ax = a_event.acceleration.x;
+  ay = a_event.acceleration.y;
+  az = a_event.acceleration.z;
+
+  // Calculate acceleration magnitude
   acceleration = sqrt(pow(ax, 2) + pow(ay, 2) + pow(az, 2));
 
   // Update PID input
@@ -71,5 +86,6 @@ void controlMotor(int speed) {
     analogWrite(5, abs(speed));
   }
 }
+
 
 
