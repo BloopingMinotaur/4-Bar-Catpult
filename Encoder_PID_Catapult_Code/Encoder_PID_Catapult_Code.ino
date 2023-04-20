@@ -7,7 +7,6 @@
 // MPU-6050 setup
 Adafruit_MPU6050 mpu;
 double ax, ay, az;
-double acceleration = 0;
 
 // Motor and encoder setup
 const int motorPinA = 8;
@@ -16,22 +15,18 @@ const int encoderPinA = 2;
 const int encoderPinB = 3;
 Encoder encoder(encoderPinA, encoderPinB);
 
-// Acceleration Refernce Values
-const long encoderCountsPerRevolution = 40;
-const long encoderCountsPerCycle = encoderCountsPerRevolution * 40;
+// Data collection settings
+const int encoderCountsPerRevolution = 40 * 40;  // one revolution of the throwing arm
+const int maxDataPoints = 1000;
+double imuData[maxDataPoints][3];  // Buffer to store IMU data
+int dataCounter = 0;
+bool dataCollectionComplete = false;
+long previousEncoderCount = 0;
 
-double getDesiredAcceleration(long encoderCount) {
-  // Calculate the current cycle position (0 to 1)
-  double cyclePosition = (encoderCount % encoderCountsPerCycle) / (double)encoderCountsPerCycle;
-
-  // Get the desired acceleration value based on the cycle position
-  // Replace this with your actual desired acceleration values
-  // double desiredAcceleration = /* Calculate the desired acceleration value based on cyclePosition */;
-  
-  return desiredAcceleration;
-}
-
-// PID setup
+// PID setup for constant motor speed
+const double desiredRPM = 400;
+const double countsPerRevolution = 40;
+const double desiredEncoderCountsPerSecond = (desiredRPM / 60) * countsPerRevolution;
 double Setpoint, Input, Output;
 double Kp = 2, Ki = 5, Kd = 1;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
@@ -53,10 +48,9 @@ void setup() {
   delay(500);
 
   // Configure PID
-  Setpoint = 14;
-  Input = acceleration;
+  Setpoint = desiredEncoderCountsPerSecond;
   myPID.SetMode(AUTOMATIC);
-  myPID.SetSampleTime(10);
+  myPID.SetSampleTime(100);
   myPID.SetOutputLimits(-255, 255);
 
   // Motor pins
@@ -74,23 +68,43 @@ void loop() {
   ay = a_event.acceleration.y;
   az = a_event.acceleration.z;
 
-  // Calculate acceleration magnitude
-  acceleration = sqrt(pow(ax, 2) + pow(ay, 2) + pow(az, 2));
+  // Read encoder value and calculate counts per second
+  long currentEncoderCount = encoder.read();
+  long deltaEncoderCount = currentEncoderCount - previousEncoderCount;
+  previousEncoderCount = currentEncoderCount;
+  Input = deltaEncoderCount;
 
-  // Read encoder value
-  long encoderPosition = encoder.read();
+  // Collect data for one revolution of the throwing arm
+  if (!dataCollectionComplete && currentEncoderCount >= encoderCountsPerRevolution) {
+    dataCollectionComplete = true;
+    Serial.println("Data collection complete.");
+  }
 
-  // Update Setpoint based on the encoder position
-  Setpoint = getDesiredAcceleration(encoderPosition);
+  if (!dataCollectionComplete) {
+    imuData[dataCounter][0] = ax;
+    imuData[dataCounter][1] = ay;
+    imuData[dataCounter][2] = az;
+    dataCounter++;
 
-  // Update PID input
-  Input = acceleration;
+    if (dataCounter >= maxDataPoints) {
+      dataCollectionComplete = true;
+      Serial.println("Data collection complete (buffer full).");
+    }
+  }
 
   // Compute PID
   myPID.Compute();
 
   // Control motor
   controlMotor(Output);
+
+  // Print IMU data
+  Serial.print("Accel X: ");
+  Serial.print(ax);
+  Serial.print(" Accel Y: ");
+  Serial.print(ay);
+  Serial.print(" Accel Z: ");
+  Serial.println(az);
 }
 
 void controlMotor(int speed) {
@@ -104,6 +118,3 @@ void controlMotor(int speed) {
     analogWrite(5, abs(speed));
   }
 }
-
-
-
