@@ -4,7 +4,7 @@
 
 // MPU-6050 setup
 Adafruit_MPU6050 mpu;
-const float accelerometerSensitivity = 8192; // Sensitivity for ±4g range
+const float accelerometerSensitivity = 2048; // Sensitivity for ±16g range
 
 void setup() {
   Serial.begin(9600);
@@ -27,10 +27,19 @@ void loop() {
   sensors_event_t a_event, g_event, temp_event;
   mpu.getEvent(&a_event, &g_event, &temp_event);
 
+  // Convert raw values to Gs
+  float accel_x = a_event.acceleration.x ;
+  float accel_y = a_event.acceleration.y ;
+  float accel_z = a_event.acceleration.z ;
+
   // Print accelerometer values in Gs
-  Serial.print("Accel X: "); Serial.print(a_event.acceleration.x);
-  Serial.print(" Accel Y: "); Serial.print(a_event.acceleration.y);
-  Serial.print(" Accel Z: "); Serial.println(a_event.acceleration.z);
+  Serial.print("Accel X: "); Serial.print(accel_x);
+  Serial.print(" Accel Y: "); Serial.print(accel_y);
+  Serial.print(" Accel Z: "); Serial.println(accel_z);
+
+  // Calculate and print the magnitude of acceleration
+  float magnitude = sqrt(pow(accel_x, 2) + pow(accel_y, 2) + pow(accel_z, 2));
+  Serial.print("Magnitude: "); Serial.println(magnitude);
 
   // Wait for a short time before the next reading
   delay(100);
